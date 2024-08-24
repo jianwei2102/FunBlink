@@ -32,7 +32,7 @@ export function UiLayout({
             <img className="h-4 md:h-6" alt="Logo" src="/logo.png" />
           </Link>
           <ul className="menu menu-horizontal px-1 space-x-2">
-            {links.map(({ label, path }) => (
+            {/* {links.map(({ label, path }) => (
               <li key={path}>
                 <Link
                   className={pathname.startsWith(path) ? 'active' : ''}
@@ -41,7 +41,7 @@ export function UiLayout({
                   {label}
                 </Link>
               </li>
-            ))}
+            ))} */}
           </ul>
         </div>
         <div className="flex-none space-x-2">
@@ -52,7 +52,7 @@ export function UiLayout({
       <ClusterChecker>
         <AccountChecker />
       </ClusterChecker>
-      <div className="flex-grow mx-4 lg:mx-auto">
+      <div className="flex-grow mx-4 lg:mx-auto w-full">
         <Suspense
           fallback={
             <div className="text-center my-32">

@@ -1,0 +1,121 @@
+{
+  "version": "0.1.0",
+  "name": "funblink",
+  "instructions": [
+    {
+      "name": "createBlink",
+      "accounts": [
+        {
+          "name": "blink",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "toPubkey",
+          "type": "string"
+        },
+        {
+          "name": "link",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "closeBlink",
+      "accounts": [
+        {
+          "name": "blink",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BlinkStruct",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isInitialized",
+            "type": "bool"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "icon",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "toPubkey",
+            "type": "string"
+          },
+          {
+            "name": "link",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BlinkExists",
+      "msg": "Blink exists"
+    },
+    {
+      "code": 6001,
+      "name": "BlinkNotExist",
+      "msg": "Blink does not exist"
+    }
+  ],
+  "metadata": {
+    "address": "D2uzKM3RRgzyvAuNiy6siidAGReRBYeRBD6U7EfWgS2Z"
+  }
+}
