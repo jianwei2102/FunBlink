@@ -1,13 +1,14 @@
 use anchor_lang::prelude::*;
 
-declare_id!("D2uzKM3RRgzyvAuNiy6siidAGReRBYeRBD6U7EfWgS2Z");
+declare_id!("31gp55u46dirwWEpeCHZv3qFKctxqsCr3GNMYCH99HAm");
 
 #[program]
-pub mod remed {
+pub mod funblink {
     use super::*;
 
     pub fn create_blink(
         ctx: Context<CreateBlink>,
+        id: String,
         title: String,
         icon: String,
         description: String,
@@ -15,26 +16,38 @@ pub mod remed {
         to_pubkey: String,
         link: String,
     ) -> Result<()> {
-        let blink = &mut ctx.accounts.blink;
+        let blink_list = &mut ctx.accounts.blink_list;
+        blink_list.is_initialized = true;
 
         // Check if a Blink already exists
-        if blink.is_initialized {
-            return err!(ErrorCode::BlinkExists);
-        }
+        // if blink_list.is_initialized {
+        //     return err!(ErrorCode::BlinkExists);
+        // }
 
-        blink.is_initialized = true;
-        blink.title = title;
-        blink.icon = icon;
-        blink.description = description;
-        blink.label = label;
-        blink.to_pubkey = to_pubkey;
-        blink.link = link;
+        let new_blink = Blink {
+            id,
+            title,
+            icon,
+            description,
+            label,
+            to_pubkey,
+            link,
+        };
+
+        blink_list.blinks.push(new_blink);
 
         Ok(())
     }
 
+    pub fn delete_blink(ctx: Context<DeleteBlink>, id: String) -> Result<()> {
+        let blink_list = &mut ctx.accounts.blink_list;
+
+        blink_list.blinks.retain(|blink: &Blink| blink.id != id);
+        Ok(())
+    }
+
     pub fn close_blink(ctx: Context<CloseBlink>) -> Result<()> {
-        let blink = &mut ctx.accounts.blink;
+        let blink = &mut ctx.accounts.blink_list;
 
         // Check if the Blink account exists (is initialized)
         if !blink.is_initialized {
@@ -47,8 +60,17 @@ pub mod remed {
 
 #[derive(Accounts)]
 pub struct CreateBlink<'info> {
-    #[account(init, payer = signer, space = 8 + 20 + 1024, seeds = [b"blink", signer.key().as_ref()], bump)]
-    pub blink: Account<'info, BlinkStruct>,
+    #[account(init_if_needed, payer = signer, space = 2048, seeds = [b"blink_list", signer.key().as_ref()], bump)]
+    pub blink_list: Account<'info, BlinkList>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DeleteBlink<'info> {
+    #[account(mut, seeds = [b"blink_list", signer.key().as_ref()], bump)]
+    pub blink_list: Account<'info, BlinkList>,
     #[account(mut)]
     pub signer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -56,21 +78,27 @@ pub struct CreateBlink<'info> {
 
 #[derive(Accounts)]
 pub struct CloseBlink<'info> {
-    #[account(mut, close = signer, seeds = [b"blink", signer.key().as_ref()], bump)]
-    pub blink: Account<'info, BlinkStruct>,
+    #[account(mut, close = signer, seeds = [b"blink_list", signer.key().as_ref()], bump)]
+    pub blink_list: Account<'info, BlinkList>,
     #[account(mut)]
     pub signer: Signer<'info>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct Blink {
+    id: String,
+    title: String,
+    icon: String,
+    description: String,
+    label: String,
+    to_pubkey: String,
+    link: String,
+}
+
 #[account]
-pub struct BlinkStruct {
-    pub is_initialized: bool,
-    pub title: String,
-    pub icon: String,
-    pub description: String,
-    pub label: String,
-    pub to_pubkey: String,
-    pub link: String,
+pub struct BlinkList {
+    blinks: Vec<Blink>,
+    is_initialized: bool,
 }
 
 #[error_code]

@@ -2,6 +2,9 @@
  * FunBlink Actions Example
  */
 
+import idl from '../../../public/funblink.json';
+import { AnchorProvider, Idl, Program } from '@project-serum/anchor';
+
 import {
   ActionGetRequest,
   ActionPostRequest,
@@ -28,60 +31,37 @@ const DEFAULT_SOL_ADDRESS: PublicKey = new PublicKey(
 export async function GET(req: Request) {
   try {
     const requestUrl = new URL(req.url);
-    const userPDAPayload = await loadUserPDA(requestUrl);
-    // const { toPubkey } = validatedQueryParams(requestUrl);
+    const blink = await loadUserPDA(requestUrl);
 
-    if (!userPDAPayload) {
-      throw new Error('Failed to load user PDA');
-      // disabled
+    if (!blink) {
+      throw new Error('Failed to load blink');
     }
 
-    const parsedLinks = JSON.parse(userPDAPayload.links);
+    // Calculate baseHref
     const baseHref = new URL(
-      `/api/actions?to=${userPDAPayload.toPubkey}`,
+      `/api/actions?to=${blink.toPubkey}`,
       requestUrl.origin
     ).toString();
 
-    const defaultLinks = {
-      actions: [
-        {
-          label: 'Send 1 SOL', // button text
-          href: `${baseHref}&amount=${'1'}`,
-        },
-        {
-          label: 'Send 5 SOL', // button text
-          href: `${baseHref}&amount=${'5'}`,
-        },
-        {
-          label: 'Send 10 SOL', // button text
-          href: `${baseHref}&amount=${'10'}`,
-        },
-        {
-          label: 'Send SOL', // button text
-          href: `${baseHref}&amount={amount}`, // this href will have a text input
-          parameters: [
-            {
-              name: 'amount', // parameter name in the `href` above
-              label: 'Enter the amount of SOL to send', // placeholder of the text input
-              required: true,
-            },
-          ],
-        },
-      ],
-    };
+    // Parse the link and replace ${baseHref} with the actual baseHref
+    const blinkData = JSON.parse(JSON.parse(blink.link));
+    const actions = blinkData.actions.map(
+      (action: { label: string; href: string; parameters?: any[] }) => ({
+        ...action,
+        href: action.href.replace('${baseHref}', baseHref),
+      })
+    );
+    console.log('Actions:', actions);
 
     const payload: ActionGetRequest = {
-      title: userPDAPayload?.title ?? 'Actions Example - Transfer Native SOL',
+      title: blink.title ?? 'Actions Example - Transfer Native SOL',
       icon:
-        userPDAPayload?.icon ??
+        blink.icon ??
         new URL('/solana-token.png', requestUrl.origin).toString(),
-      description:
-        userPDAPayload?.description ?? 'Transfer SOL to another Solana wallet',
-      label: userPDAPayload?.label ?? 'Transfer',
-      // error: { message: 'Invalid address provided' },
-      // disabled: true,
+      description: blink.description ?? 'Transfer SOL to another Solana wallet',
+      label: blink.label ?? 'Transfer',
       links: {
-        actions: parsedLinks.actions,
+        actions: actions,
       },
     };
 
@@ -198,27 +178,39 @@ function validatedQueryParams(requestUrl: URL) {
     toPubkey,
   };
 }
+async function loadUserPDA(requestUrl: URL) {
+  const pda = requestUrl.searchParams.get('pda') ?? '';
+  const id = requestUrl.searchParams.get('id');
 
-function loadUserPDA(requestUrl: URL) {
-  const retrieveStatus = true;
-  if (retrieveStatus) {
-    const title = 'Actions Example - Transfer Native SOL';
-    const icon = new URL('/solana-token.png', requestUrl.origin).toString();
-    const description = 'Transfer SOL to another Solana wallet';
-    const label = 'Transfer';
-    const toPubkey = '5ufHigmjsV3ucetqXxZgZuYkmHyRiyYPYm5RSM8y2WFQ';
-    const links =
-      // '{"actions":[{"label":"Send 1 SOL","href":"${baseHref}?&amount=1"},{"label":"Send 5 SOL","href":"${baseHref}?&amount=5"},{"label":"Send 10 SOL","href":"${baseHref}?&amount=10"},{"label":"Send SOL","href":"${baseHref}?&amount={amount}","parameters":[{"name":"amount","label":"Enter the amount of SOL to send","required":true}]}]}';
-      '{\n      "actions":[{"label":"Send 1 SOL","href":"${baseHref}&amount=1"},{"label":"Send 2 SOL","href":"${baseHref}&amount=2"},{"label":"Send 5 SOL","href":"${baseHref}&amount=5"},{"label":"Send 144 SOL","href":"${baseHref}&amount=144"},{"label":"Send 1 SOL","href":"${baseHref}&amount=1"},{"label":"Send 1 SOL","href":"${baseHref}&amount=1"}]\n    }';
-    return {
-      title,
-      icon,
-      description,
-      label,
-      toPubkey,
-      links,
-    };
-  } else {
+  try {
+    const anchorProvider = new AnchorProvider(
+      new Connection(clusterApiUrl('devnet')),
+      null,
+      AnchorProvider.defaultOptions()
+    );
+
+    const program = new Program(
+      idl as Idl,
+      '31gp55u46dirwWEpeCHZv3qFKctxqsCr3GNMYCH99HAm',
+      anchorProvider
+    );
+
+    const blinks = await program.account.blinkList.fetch(pda);
+    // console.log('Blinks:', blinks);
+
+    // Filter the blink entry by id
+    const blink = blinks.blinks.find(
+      (blink: { id: string }) => blink.id === id
+    );
+
+    if (blink) {
+      return blink;
+    } else {
+      console.error('Blink not found');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error', error);
     return null;
   }
 }

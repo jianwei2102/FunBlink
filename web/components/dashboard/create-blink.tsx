@@ -2,15 +2,16 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import img from '../../public/solana-token.png';
-import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
+import toast from 'react-hot-toast';
 import idl from '../../public/funblink.json';
+import img from '../../public/solana-token.png';
 import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Idl, Program, Wallet } from '@project-serum/anchor';
+import { useAnchorWallet, useConnection } from '@solana/wallet-adapter-react';
 
 export default function CreateBlink() {
   const programId = new PublicKey(
-    'D2uzKM3RRgzyvAuNiy6siidAGReRBYeRBD6U7EfWgS2Z'
+    '31gp55u46dirwWEpeCHZv3qFKctxqsCr3GNMYCH99HAm'
   );
 
   //   const connection = new Connection(clusterApiUrl('devnet'));
@@ -18,7 +19,7 @@ export default function CreateBlink() {
   const wallet = useAnchorWallet() as Wallet;
 
   const [toPubkey, setToPubkey] = useState('');
-  const [manualSend, setManualSend] = useState(false);
+  const [manualSend, setManualSend] = useState(true);
   const [title, setTitle] = useState('Actions Example - Transfer Native SOL');
   const [description, setDescription] = useState(
     'Transfer SOL to another Solana wallet'
@@ -111,17 +112,17 @@ export default function CreateBlink() {
 
     console.log('Form Data Submitted:', formData);
 
-    // Ensure the wallet is connected
-    if (!wallet.publicKey) {
-      throw new Error('Wallet is not connected');
-    }
-
-    const blinkSeeds = [
-      Buffer.from('blink'),
-      wallet.publicKey.toBuffer(),
-    ].filter((seed) => seed !== undefined) as (Uint8Array | Buffer)[];
-
     try {
+      // Ensure the wallet is connected
+      if (!wallet.publicKey) {
+        throw new Error('Wallet is not connected');
+      }
+
+      const blinkSeeds = [
+        Buffer.from('blink_list'),
+        wallet.publicKey.toBuffer(),
+      ].filter((seed) => seed !== undefined) as (Uint8Array | Buffer)[];
+
       const [blinkAccount] = await PublicKey.findProgramAddress(
         blinkSeeds,
         programId
@@ -131,27 +132,35 @@ export default function CreateBlink() {
 
       const program = new Program(idl as Idl, programId, anchorProvider);
       console.log('Blink Account:', blinkAccount.toBase58());
-        const blink = await program.account.blinkStruct.fetch(blinkAccount);
-        console.log('Blink Data:', blink);
+      let id;
+      try {
+        const blinks = await program.account.blinkList.fetch(blinkAccount);
+        console.log('Blinks:', blinks);
+        const lastElement = blinks.blinks[blinks.blinks.length - 1];
+        id = parseInt(lastElement.id) + 1;
+      } catch (error) {
+        console.log('Error fetching blink:', error);
+        id = 0;
+      }
 
-    //   await program.methods
-    //     .createBlink(
-    //       title,
-    //       iconURL,
-    //       description,
-    //       'Transfer',
-    //       toPubkey,
-    //       JSON.stringify(generateActionsString(actions, manualSend))
-    //     )
-    //     .accounts({
-    //       blink: blinkAccount,
-    //       signer: anchorProvider.wallet.publicKey,
-    //       systemProgram: SystemProgram.programId,
-    //     })
-    //     .signers([])
-    //     .rpc();
-
-      console.log('Blink created successfully');
+      await program.methods
+        .createBlink(
+          id?.toString(),
+          title,
+          iconURL,
+          description,
+          'Transfer',
+          toPubkey,
+          JSON.stringify(generateActionsString(actions, manualSend))
+        )
+        .accounts({
+          blinkList: blinkAccount,
+          signer: anchorProvider.wallet.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([])
+        .rpc();
+      toast.success('Blink created successfully');
     } catch (error) {
       console.error('Error creating blink:', error);
     }
@@ -277,7 +286,7 @@ export default function CreateBlink() {
                 type="submit"
                 className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-full text-center font-semibold"
               >
-                Submit
+                Create
               </button>
             </div>
           </form>

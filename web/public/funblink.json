@@ -6,7 +6,7 @@
       "name": "createBlink",
       "accounts": [
         {
-          "name": "blink",
+          "name": "blinkList",
           "isMut": true,
           "isSigner": false
         },
@@ -22,6 +22,10 @@
         }
       ],
       "args": [
+        {
+          "name": "id",
+          "type": "string"
+        },
         {
           "name": "title",
           "type": "string"
@@ -49,10 +53,36 @@
       ]
     },
     {
+      "name": "deleteBlink",
+      "accounts": [
+        {
+          "name": "blinkList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "closeBlink",
       "accounts": [
         {
-          "name": "blink",
+          "name": "blinkList",
           "isMut": true,
           "isSigner": false
         },
@@ -67,13 +97,35 @@
   ],
   "accounts": [
     {
-      "name": "BlinkStruct",
+      "name": "BlinkList",
       "type": {
         "kind": "struct",
         "fields": [
           {
+            "name": "blinks",
+            "type": {
+              "vec": {
+                "defined": "Blink"
+              }
+            }
+          },
+          {
             "name": "isInitialized",
             "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Blink",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
           },
           {
             "name": "title",
@@ -114,8 +166,5 @@
       "name": "BlinkNotExist",
       "msg": "Blink does not exist"
     }
-  ],
-  "metadata": {
-    "address": "D2uzKM3RRgzyvAuNiy6siidAGReRBYeRBD6U7EfWgS2Z"
-  }
+  ]
 }
