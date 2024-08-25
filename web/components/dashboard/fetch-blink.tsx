@@ -69,7 +69,7 @@ export default function FetchBlink() {
   }, [connection, wallet]);
 
   return (
-    <div className="flex flex-col justify-center items-center w-full">
+    <div className="flex flex-row justify-center items-center w-full ">
       {/* Map over the blinkList and pass each blink to the BlinkDisplay component */}
       {blinkList.map((blink, index) => (
         <BlinkDisplay
