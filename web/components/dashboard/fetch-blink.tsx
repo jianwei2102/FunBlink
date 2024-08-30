@@ -20,14 +20,11 @@ const getProvider = (connection: Connection, wallet: Wallet) => {
 };
 
 export default function FetchBlink() {
-  const programId = new PublicKey(
-    '31gp55u46dirwWEpeCHZv3qFKctxqsCr3GNMYCH99HAm'
-  );
   const { connection } = useConnection();
   const wallet = useAnchorWallet() as Wallet;
 
   // State to hold the blink list
-  const [blinkList, setBlinkList] = useState<any[]>([]); // Changed to any[] to handle blink objects
+  const [blinkList, setBlinkList] = useState<any[]>([]);
   const [blinkAccount, setBlinkAccount] = useState<string>('');
 
   useEffect(() => {
@@ -41,6 +38,10 @@ export default function FetchBlink() {
           Buffer.from('blink_list'),
           wallet.publicKey.toBuffer(),
         ].filter((seed) => seed !== undefined) as (Uint8Array | Buffer)[];
+
+        const programId = new PublicKey(
+          '31gp55u46dirwWEpeCHZv3qFKctxqsCr3GNMYCH99HAm'
+        );
 
         const [blinkAccount] = await PublicKey.findProgramAddress(
           blinkSeeds,
