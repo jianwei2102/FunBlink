@@ -1,4 +1,5 @@
 # funblink
+Checkout funblink-v2 here: https://github.com/jianwei2102/funblink-v2
 
 This project is generated with the [create-solana-dapp](https://github.com/solana-developers/create-solana-dapp) generator.
 
